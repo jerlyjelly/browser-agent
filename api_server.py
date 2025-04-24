@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 # Import necessary components
 from browser_use import Agent
+from browser_use.browser.browser import Browser, BrowserConfig # Added import
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.language_models.chat_models import BaseChatModel
 
@@ -80,9 +81,18 @@ async def run_task_endpoint(request: TaskRequest):
         # Instantiate LLM
         llm = get_gemini_flash_llm()
 
-        # Instantiate Agent
-        # Consider adding BrowserConfig if specific settings like headless are needed
-        agent = Agent(task=task_description, llm=llm)
+        # --- Browser Configuration for CDP ---
+        print("Configuring browser to connect via CDP...")
+        browser_config = BrowserConfig(
+            # headless=False, # Keep headless=False if you want to see the browser
+            cdp_url="http://localhost:9222" # Connect to existing Chrome on port 9222
+        )
+        browser = Browser(config=browser_config)
+        print(f"Browser configured with CDP URL: {browser_config.cdp_url}")
+        # -------------------------------------
+
+        # Instantiate Agent with the pre-configured browser
+        agent = Agent(task=task_description, llm=llm, browser=browser)
 
         # Run agent asynchronously
         print(f"Running agent for task: '{task_description}'...")
